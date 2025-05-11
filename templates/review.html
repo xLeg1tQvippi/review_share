@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оставьте отзыв</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .floating-text {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            color: #ffeaa7;
+            font-weight: 800;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes float {
+            0% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-20px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="floating-text">Justiniano Hotels</div>
+
+    <!-- Кнопка QR -->
+    <div class="absolute top-6 right-6 z-20">
+        <button onclick="toggleQR()" class="bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition">
+            📷 QR
+        </button>
+    </div>
+
+    <!-- QR-код -->
+    <div id="qrModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30">
+        <div class="bg-white p-4 rounded-xl shadow-xl text-center">
+            <p class="mb-2 text-lg font-semibold">Сканируйте QR-код для быстрого доступа</p>
+            <img id="qrImage" src="" alt="QR Code" class="mx-auto">
+            <button onclick="toggleQR()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex items-center justify-center backdrop-blur-sm bg-black/40">
+        <div class="max-w-md w-full bg-white bg-opacity-80 rounded-2xl shadow-2xl p-6">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">Оставьте отзыв 📝</h1>
+            <p class="text-gray-600 text-center mb-6">Помогите нам стать лучше — поделитесь впечатлениями!</p>
+            <div class="text-center mb-4">
+                <div id="rating" class="flex justify-center gap-1">
+                    <template id="star-template">
+                        <svg class="star w-8 h-8 text-gray-400 cursor-pointer transition" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.379 2.455a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118L10 13.348l-3.378 2.455c-.785.57-1.84-.197-1.54-1.118l1.286-3.97a1 1 0 00-.364-1.118L2.625 9.397c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.97z"/>
+                        </svg>
+                    </template>
+                    <script>
+                        const ratingContainer = document.getElementById('rating');
+                        for (let i = 1; i <= 5; i++) {
+                            const star = document.getElementById('star-template').content.cloneNode(true).children[0];
+                            star.setAttribute('data-value', i);
+                            ratingContainer.appendChild(star);
+                        }
+                    </script>
+                </div>
+                <input type="hidden" name="rating" id="ratingValue" value="0">
+            </div>
+            <textarea id="reviewText"
+                class="w-full h-32 border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                placeholder="Что вам понравилось?.."></textarea>
+            <div class="mt-4 flex gap-2 justify-center">
+                <button onclick="copyReview()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition">Скопировать</button>
+            </div>
+            <div id="thanksMessage" class="mt-4 text-center text-green-600 font-semibold hidden">
+                Спасибо за отзыв!
+            </div>
+            <div class="mt-6 text-center text-gray-700">Выберите платформу:</div>
+            <div class="mt-2 flex gap-3 justify-center">
+                <a href="#" onclick="return checkRating(this, 0)"
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl transition">Google</a>
+                <a href="#" onclick="return checkRating(this, 1)"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl transition">TripAdvisor</a>
+                <a href="#" onclick="return checkRating(this, 2)"
+                    class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl transition">TopHotels</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyReview() {
+            const text = document.getElementById('reviewText').value;
+            navigator.clipboard.writeText(text)
+                .then(() => alert('Отзыв скопирован!'))
+                .catch(() => alert('Не удалось скопировать :('));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const stars = document.querySelectorAll('.star');
+            const ratingValue = document.getElementById('ratingValue');
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.getAttribute('data-value'));
+                    ratingValue.value = value;
+
+                    stars.forEach(s => {
+                        const v = parseInt(s.getAttribute('data-value'));
+                        s.classList.toggle('text-yellow-400', v <= value);
+                        s.classList.toggle('text-gray-400', v > value);
+                    });
+                });
+            });
+        });
+
+        function checkRating(link, index) {
+            const rating = parseInt(document.getElementById('ratingValue').value);
+            const thanks = document.getElementById('thanksMessage');
+            if (rating < 5) {
+                thanks.classList.remove('hidden');
+                return false;
+            }
+            const urls = [
+                "https://www.google.com/maps/place/Justiniano+Club+Alanya+Beach/@36.650233,31.6725321,17z/data=!4m11!3m10!1s0x14dcac556b927e69:0x59b9b942f8b99bd1!5m2!4m1!1i2!8m2!3d36.650233!4d31.675107!9m1!1b1!16s%2Fg%2F1tgl67zq?entry=ttu&g_ep=EgoyMDI1MDUwNy4wIKXMDSoASAFQAw%3D%3D",
+                "https://www.tripadvisor.ru/UserReviewEdit-g950910-d508026-Justiniano_Club_Alanya-Okurcalar_Alanya_Turkish_Mediterranean_Coast.html",
+                "https://tophotels.ru/hotel/al195/review/add"
+            ];
+            window.open(urls[index], '_blank');
+            return false;
+        }
+
+        function toggleQR() {
+            const qr = document.getElementById('qrModal');
+            const qrImage = document.getElementById('qrImage');
+            const rawURL = window.location.href.replace('https://', 'http://');
+            const base = rawURL.split('/')[2];
+            const redirectURL = `http://${base}/go?to=http://${base}/`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(redirectURL)}`;
+            qrImage.src = qrSrc;
+            qr.classList.toggle('hidden');
+        }
+    </script>
+</body>
+
+</html>
